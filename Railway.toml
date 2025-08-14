@@ -1,0 +1,6 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "pnpm install --frozen-lockfile && pnpm turbo run build --filter=apps/web"
+
+[deploy]
+startCommand = "pnpm --filter apps/web start"
