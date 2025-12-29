@@ -8,11 +8,11 @@ import "@karakeep/tailwind-config/globals.css";
 
 import type { Viewport } from "next";
 import React from "react";
-import { Toaster } from "@/components/ui/toaster";
 import Providers from "@/lib/providers";
 import { getUserLocalSettings } from "@/lib/userLocalSettings/userLocalSettings";
 import { getServerAuthSession } from "@/server/auth";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "sonner";
 
 import { clientConfig } from "@karakeep/shared/config";
 
@@ -54,7 +54,11 @@ export default async function RootLayout({
   const userSettings = await getUserLocalSettings();
   const isRTL = userSettings.lang === "ar";
   return (
-    <html className="" lang={userSettings.lang} dir={isRTL ? "rtl" : "ltr"}>
+    <html
+      lang={userSettings.lang}
+      dir={isRTL ? "rtl" : "ltr"}
+      suppressHydrationWarning
+    >
       <body className={inter.className}>
         <NuqsAdapter>
           <Providers

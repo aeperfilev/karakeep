@@ -141,6 +141,37 @@ describe("API Keys Routes", () => {
       );
     });
   });
+  describe("regenerate", () => {
+    test<CustomTestContext>("revokes API key successfully", async ({
+      unauthedAPICaller,
+      db,
+    }) => {
+      const user = await unauthedAPICaller.users.create({
+        name: "Test User",
+        email: "test@test.com",
+        password: "password123",
+        confirmPassword: "password123",
+      });
+
+      const api = getApiCaller(db, user.id, user.email).apiKeys;
+
+      const firstKey = await api.create({ name: "Test Key" });
+      const regeneratedKey = await api.regenerate({ id: firstKey.id });
+
+      // Validate the new key
+      const validationResult = await unauthedAPICaller.apiKeys.validate({
+        apiKey: regeneratedKey.key,
+      });
+      expect(validationResult.success).toBe(true);
+
+      // Validate the old key is revoked
+      await expect(() =>
+        unauthedAPICaller.apiKeys.validate({
+          apiKey: firstKey.key,
+        }),
+      ).rejects.toThrow();
+    });
+  });
 
   describe("revoke", () => {
     test<CustomTestContext>("revokes API key successfully", async ({
@@ -385,6 +416,52 @@ describe("API Keys Routes", () => {
           password: "password123",
         }),
       ).rejects.toThrow(/UNAUTHORIZED/);
+    });
+
+    test<CustomTestContext>("rejects unverified user when email verification is enabled", async ({
+      db,
+    }) => {
+      // Import User model to create an unverified user directly
+      const { User } = await import("../models/users");
+
+      // Create user with password but without email verification
+      await User.createRaw(db, {
+        name: "Unverified User",
+        email: "unverified@test.com",
+        password: await (
+          await import("../auth")
+        ).hashPassword("password123", "test-salt"),
+        salt: "test-salt",
+        emailVerified: null, // User is not verified
+      });
+
+      // Mock serverConfig to enable email verification requirement
+      const originalConfig = (await import("@karakeep/shared/config")).default;
+      vi.spyOn(
+        originalConfig.auth,
+        "emailVerificationRequired",
+        "get",
+      ).mockReturnValue(true);
+
+      const { createCallerFactory } = await import("../index");
+      const { appRouter } = await import("./_app");
+      const createCaller = createCallerFactory(appRouter);
+      const caller = createCaller({
+        user: null,
+        db,
+        req: { ip: null },
+      });
+
+      // Attempting to exchange should fail with verification error
+      await expect(() =>
+        caller.apiKeys.exchange({
+          keyName: "Extension Key",
+          email: "unverified@test.com",
+          password: "password123",
+        }),
+      ).rejects.toThrow(/verify your email/i);
+
+      vi.restoreAllMocks();
     });
   });
 

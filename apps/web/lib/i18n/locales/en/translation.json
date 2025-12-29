@@ -1,5 +1,6 @@
 {
   "common": {
+    "default": "Default",
     "url": "URL",
     "name": "Name",
     "email": "Email",
@@ -25,6 +26,7 @@
     "highlights": "Highlights",
     "source": "Source",
     "screenshot": "Screenshot",
+    "pdf": "Archived PDF",
     "video": "Video",
     "archive": "Archive",
     "home": "Home",
@@ -47,6 +49,18 @@
     "list": "List",
     "compact": "Compact"
   },
+  "view_options": {
+    "title": "View Options",
+    "layout": "Layout",
+    "columns": "Columns",
+    "display_options": "Display Options",
+    "show_note_previews": "Show Notes",
+    "show_tags": "Show Tags",
+    "show_title": "Show Title",
+    "image_options": "Image Options",
+    "image_fit_cover": "Cover (Fill)",
+    "image_fit_contain": "Contain (Fit)"
+  },
   "actions": {
     "change_layout": "Change Layout",
     "archive": "Archive",
@@ -57,8 +71,11 @@
     "toggle_show_archived": "Show Archived",
     "refresh": "Refresh",
     "recrawl": "Recrawl",
+    "offline_copies": "Offline Copies",
     "download_full_page_archive": "Download Full Page Archive",
+    "preserve_as_pdf": "Preserve as PDF",
     "edit_tags": "Edit Tags",
+    "edit_notes": "Edit Notes",
     "add_to_list": "Add to List",
     "select_all": "Select All",
     "unselect_all": "Unselect All",
@@ -70,6 +87,7 @@
     "save": "Save",
     "add": "Add",
     "edit": "Edit",
+    "confirm": "Confirm",
     "open_editor": "Open Editor",
     "create": "Create",
     "fetch_now": "Fetch Now",
@@ -79,6 +97,7 @@
     "close": "Close",
     "merge": "Merge",
     "cancel": "Cancel",
+    "regenerate": "Regenerate",
     "apply_all": "Apply All",
     "ignore": "Ignore",
     "sort": {
@@ -86,7 +105,8 @@
       "relevant_first": "Most Relevant First",
       "newest_first": "Newest First",
       "oldest_first": "Oldest First"
-    }
+    },
+    "load_more": "Load More"
   },
   "highlights": {
     "no_highlights": "You don't have any highlights yet."
@@ -103,6 +123,17 @@
       "confirm_new_password": "Confirm New Password",
       "options": "Options",
       "interface_lang": "Interface Language",
+      "avatar": {
+        "title": "Profile Photo",
+        "description": "Upload a square image to use as your avatar.",
+        "upload": "Upload avatar",
+        "change": "Change avatar",
+        "remove": "Remove avatar",
+        "remove_confirm_title": "Remove avatar?",
+        "remove_confirm_description": "This will clear your current profile photo.",
+        "updated": "Avatar updated",
+        "removed": "Avatar removed"
+      },
       "user_settings": {
         "user_settings_updated": "User settings have been updated!",
         "bookmark_click_action": {
@@ -115,6 +146,38 @@
           "show": "Show archived bookmarks in tags and lists",
           "hide": "Hide archived bookmarks in tags and lists"
         }
+      },
+      "reader_settings": {
+        "title": "Reader Settings",
+        "description": "Configure default text settings for the reader view. These settings sync across all your devices.",
+        "font_family": "Font Family",
+        "font_size": "Font Size",
+        "line_height": "Line Height",
+        "save_as_default": "Save as default",
+        "clear_defaults": "Clear all defaults",
+        "not_set": "Not set",
+        "using_default": "Using client default",
+        "preview": "Preview",
+        "preview_text": "The quick brown fox jumps over the lazy dog. This is how your reader view text will appear.",
+        "defaults_cleared": "Reader defaults have been cleared",
+        "local_overrides_title": "Device-specific settings active",
+        "local_overrides_description": "This device has reader settings that differ from your global defaults:",
+        "local_overrides_cleared": "Device-specific settings have been cleared",
+        "clear_local_overrides": "Clear device settings",
+        "serif": "Serif",
+        "sans": "Sans Serif",
+        "mono": "Monospace",
+        "tooltip_default": "Reading settings",
+        "tooltip_preview": "Unsaved preview changes",
+        "tooltip_local": "Device settings differ from global",
+        "tooltip_preview_and_local": "Unsaved preview changes; device settings differ from global",
+        "reset_preview": "Reset preview",
+        "save_to_device": "This device",
+        "save_to_all_devices": "All devices",
+        "save_hint": "Save settings for this device only or sync across all devices",
+        "adjust_hint": "Adjust settings above to preview changes",
+        "clear_override_hint": "Clear device override to use global setting ({{value}})",
+        "preview_inline": "(preview)"
       }
     },
     "stats": {
@@ -165,10 +228,18 @@
       },
       "storage_breakdown": {
         "title": "Storage Breakdown"
+      },
+      "bookmark_sources": {
+        "title": "Bookmark Sources",
+        "empty": "No source data available"
       }
     },
     "ai": {
       "ai_settings": "AI Settings",
+      "auto_tagging": "Auto-tagging",
+      "auto_tagging_description": "Automatically generate tags for your bookmarks using AI.",
+      "auto_summarization": "Auto-summarization",
+      "auto_summarization_description": "Automatically generate summaries for your bookmarks using AI.",
       "tagging_rules": "Tagging Rules",
       "tagging_rule_description": "Prompts that you add here will be included as rules to the model during tag generation. You can view the final prompts in the prompt preview section.",
       "prompt_preview": "Prompt Preview",
@@ -178,7 +249,18 @@
       "all_tagging": "All Tagging",
       "text_tagging": "Text Tagging",
       "image_tagging": "Image Tagging",
-      "summarization": "Summarization"
+      "summarization": "Summarization",
+      "tag_style": "Tag Style",
+      "tag_style_description": "Choose how your auto-generated tags should be formatted.",
+      "lowercase_hyphens": "Lowercase with hyphens",
+      "lowercase_spaces": "Lowercase with spaces",
+      "lowercase_underscores": "Lowercase with underscores",
+      "titlecase_spaces": "Title case with spaces",
+      "titlecase_hyphens": "Title case with hyphens",
+      "camelCase": "camelCase",
+      "no_preference": "No preference",
+      "inference_language": "Inference Language",
+      "inference_language_description": "Choose language for AI-generated tags and summaries."
     },
     "feeds": {
       "rss_subscriptions": "RSS Subscriptions",
@@ -209,10 +291,12 @@
       "import_export_bookmarks": "Import / Export Bookmarks",
       "import_bookmarks_from_html_file": "Import Bookmarks from HTML file",
       "import_bookmarks_from_pocket_export": "Import Bookmarks from Pocket export",
+      "import_bookmarks_from_matter_export": "Import Bookmarks from Matter export",
       "import_bookmarks_from_omnivore_export": "Import Bookmarks from Omnivore export",
       "import_bookmarks_from_linkwarden_export": "Import Bookmarks from Linkwarden export",
       "import_bookmarks_from_karakeep_export": "Import Bookmarks from Karakeep export",
       "import_bookmarks_from_tab_session_manager_export": "Import Bookmarks from Tab Session Manager",
+      "import_bookmarks_from_mymind_export": "Import Bookmarks from mymind export",
       "export_links_and_notes": "Export Links and Notes",
       "imported_bookmarks": "Imported Bookmarks"
     },
@@ -221,7 +305,12 @@
       "new_api_key": "New API Key",
       "new_api_key_desc": "Give your API key a unique name",
       "key_success": "Key was successfully created",
-      "key_success_please_copy": "Please copy the key and store it somewhere safe. Once you close the dialog, you won't be able to access it again."
+      "key_success_please_copy": "Please copy the key and store it somewhere safe. Once you close the dialog, you won't be able to access it again.",
+      "regenerate_api_key": "Regenerate API Key",
+      "key_regenerated": "Key was successfully regenerated",
+      "key_regenerated_please_copy": "Please copy the new key and store it somewhere safe. The old key has been revoked and will no longer work.",
+      "regenerate_warning": "Are you sure you want to regenerate the API key \"{{name}}\"?",
+      "regenerate_confirmation": "This will revoke the current key and generate a new one. Any applications using the current key will stop working."
     },
     "broken_links": {
       "broken_links": "Broken Links",
@@ -306,6 +395,82 @@
       "loading_usage": "Loading usage information...",
       "free": "Free",
       "paid": "Paid"
+    },
+    "import_sessions": {
+      "title": "Import Sessions",
+      "description": "View and manage your bulk import sessions. Sessions are automatically created when you import bookmarks.",
+      "load_error": "Failed to load import sessions",
+      "no_sessions": "No import sessions yet",
+      "no_sessions_detail": "Import sessions will appear here automatically when you import bookmarks",
+      "created_at": "Created {{time}}",
+      "progress": "Progress",
+      "status": {
+        "pending": "Pending",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "processing": "Processing"
+      },
+      "badges": {
+        "pending": "{{count}} pending",
+        "processing": "{{count}} processing",
+        "completed": "{{count}} completed",
+        "failed": "{{count}} failed"
+      },
+      "imported_to": "Imported to:",
+      "view_list": "View List",
+      "delete_dialog_title": "Delete Import Session",
+      "delete_dialog_description": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone. The bookmarks themselves will not be deleted.",
+      "delete_session": "Delete Session"
+    },
+    "backups": {
+      "backups": "Backups",
+      "page_title": "Backups",
+      "page_description": "Automatically create and manage backups of your bookmarks. Backups are compressed and stored securely.",
+      "configuration": {
+        "title": "Backup Configuration",
+        "enable_automatic_backups": "Enable Automatic Backups",
+        "enable_automatic_backups_description": "Automatically create backups of your bookmarks",
+        "backup_frequency": "Backup Frequency",
+        "backup_frequency_description": "How often backups should be created",
+        "retention_period": "Retention Period (days)",
+        "retention_period_description": "How many days to keep backups before deleting them",
+        "frequency": {
+          "daily": "Daily",
+          "weekly": "Weekly"
+        },
+        "select_frequency": "Select frequency",
+        "save_settings": "Save Settings"
+      },
+      "list": {
+        "title": "Your Backups",
+        "create_backup_now": "Create Backup Now",
+        "no_backups": "You don't have any backups yet. Enable automatic backups or create one manually.",
+        "table": {
+          "created_at": "Created At",
+          "bookmarks": "Bookmarks",
+          "size": "Size",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "status": {
+          "success": "Success",
+          "failed": "Failed",
+          "pending": "Pending"
+        },
+        "actions": {
+          "download_backup": "Download Backup",
+          "delete_backup": "Delete Backup"
+        }
+      },
+      "dialogs": {
+        "delete_backup_title": "Delete Backup?",
+        "delete_backup_description": "Are you sure you want to delete this backup? This action cannot be undone."
+      },
+      "toasts": {
+        "backup_queued": "Backup job has been queued! It will be processed shortly.",
+        "backup_deleted": "Backup has been deleted!"
+      }
     }
   },
   "admin": {
@@ -316,32 +481,85 @@
       "total_bookmarks": "Total Bookmarks",
       "server_version": "Server Version"
     },
-    "background_jobs": {
-      "background_jobs": "Background Jobs",
-      "crawler_jobs": "Crawler Jobs",
-      "indexing_jobs": "Indexing Jobs",
-      "inference_jobs": "Inference Jobs",
-      "tidy_assets_jobs": "Tidy Assets Jobs",
-      "video_jobs": "Video Download Jobs",
-      "webhook_jobs": "Webhook Jobs",
-      "asset_preprocessing_jobs": "Asset Preprocessing Jobs",
-      "feed_jobs": "RSS Feed Jobs",
-      "job": "Job",
-      "queued": "Queued",
-      "pending": "Pending",
-      "failed": "Failed"
+    "service_connections": {
+      "title": "Service Connections",
+      "description": "Monitor the health and connectivity of external system dependencies",
+      "search_engine": "Search Engine",
+      "browser": "Browser",
+      "queue_system": "Queue System",
+      "status": {
+        "not_configured": "Not Configured",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
+      }
     },
-    "actions": {
-      "recrawl_failed_links_only": "Recrawl Failed Links Only",
-      "recrawl_all_links": "Recrawl All Links",
-      "without_inference": "Without Inference",
-      "regenerate_ai_tags_for_failed_bookmarks_only": "Regenerate AI Tags for Failed Bookmarks Only",
-      "regenerate_ai_tags_for_all_bookmarks": "Regenerate AI Tags for All Bookmarks",
-      "regenerate_ai_summaries_for_failed_bookmarks_only": "Regenerate AI Summaries for Failed Bookmarks Only",
-      "regenerate_ai_summaries_for_all_bookmarks": "Regenerate AI Summaries for All Bookmarks",
-      "reindex_all_bookmarks": "Reindex All Bookmarks",
-      "compact_assets": "Compact Assets",
-      "reprocess_assets_fix_mode": "Reprocess Assets (Fix Mode)"
+    "background_jobs": {
+      "jobs": {
+        "crawler": {
+          "title": "Crawler Jobs",
+          "description": "Web crawling and content extraction from URLs"
+        },
+        "inference": {
+          "title": "Inference Jobs",
+          "description": "AI-powered tagging and summarization of content"
+        },
+        "indexing": {
+          "title": "Indexing Jobs",
+          "description": "Search index updates"
+        },
+        "asset_preprocessing": {
+          "title": "Asset Preprocessing Jobs",
+          "description": "Image and document preprocessing (screenshots, text extraction, etc.)"
+        },
+        "admin_maintenance": {
+          "title": "Admin Maintenance Jobs",
+          "description": "Administrative cleanup and asset maintenance"
+        },
+        "video": {
+          "title": "Video Download Jobs",
+          "description": "Video extraction and download"
+        },
+        "webhook": {
+          "title": "Webhook Jobs",
+          "description": "External webhook notifications"
+        },
+        "feed": {
+          "title": "RSS Feed Jobs",
+          "description": "RSS feed processing and content updates"
+        }
+      },
+      "background_jobs": "Background Jobs",
+      "monitor_and_manage": "Monitor and manage background job queues and system processing tasks",
+      "active": "Active",
+      "available_actions": "Available Actions",
+      "status": {
+        "title": "Understanding Job States",
+        "queued": {
+          "title": "Queued",
+          "description": "Jobs waiting in line to be processed. They will start automatically when resources are available."
+        },
+        "unprocessed": {
+          "title": "Unprocessed",
+          "description": "Bookmarks that have not yet been processed. They are most likely already queued for processing, if not, you might need to manually re-enqueue them."
+        },
+        "failed": {
+          "title": "Failed",
+          "description": "Bookmarks that encountered errors during processing. These may need manual attention."
+        }
+      },
+      "actions": {
+        "recrawl_failed_links_only": "Recrawl Failed Links Only",
+        "recrawl_all_links": "Recrawl All Links",
+        "without_inference": "Without Inference",
+        "regenerate_ai_tags_for_failed_bookmarks_only": "Regenerate AI Tags for Failed Bookmarks Only",
+        "regenerate_ai_tags_for_all_bookmarks": "Regenerate AI Tags for All Bookmarks",
+        "regenerate_ai_summaries_for_failed_bookmarks_only": "Regenerate AI Summaries for Failed Bookmarks Only",
+        "regenerate_ai_summaries_for_all_bookmarks": "Regenerate AI Summaries for All Bookmarks",
+        "reindex_all_bookmarks": "Reindex All Bookmarks",
+        "clean_assets": "Clean Dangling Assets & Re-sync Metadata",
+        "migrate_large_link_html_content": "Move Large Inline HTML Content to Assets",
+        "reprocess_assets_fix_mode": "Reprocess Unprocessed Assets"
+      }
     },
     "users_list": {
       "users_list": "Users List",
@@ -364,6 +582,8 @@
   "lists": {
     "all_lists": "All Lists",
     "favourites": "Favourites",
+    "shared": "Shared",
+    "shared_lists": "Shared Lists",
     "new_list": "New List",
     "edit_list": "Edit List",
     "share_list": "Share List",
@@ -380,6 +600,12 @@
     "search_query": "Search Query",
     "search_query_help": "Learn more about the search query language.",
     "description": "Description (Optional)",
+    "delete_list": {
+      "title": "Delete List",
+      "description": "Deleting a list doesn't delete any bookmarks in that list.",
+      "delete_children": "Delete children lists (recursively)",
+      "delete_children_description": "If not checked, all direct children lists will become root lists"
+    },
     "rss": {
       "title": "RSS Feed",
       "description": "Enable an RSS feed for this list",
@@ -389,6 +615,54 @@
       "title": "Public List",
       "description": "Allow others to view this list",
       "share_link": "Share Link"
+    },
+    "collaborators": {
+      "manage": "Manage Collaborators",
+      "view": "View Collaborators",
+      "collaborators": "Collaborators",
+      "add": "Add Collaborator",
+      "current": "Current Collaborators",
+      "enter_email": "Enter email address",
+      "please_enter_email": "Please enter an email address",
+      "added_successfully": "Collaborator added successfully",
+      "invitation_sent": "Invitation sent successfully",
+      "failed_to_add": "Failed to add collaborator",
+      "removed": "Collaborator removed",
+      "failed_to_remove": "Failed to remove collaborator",
+      "role_updated": "Role updated",
+      "failed_to_update_role": "Failed to update role",
+      "invitation_revoked": "Invitation revoked",
+      "failed_to_revoke": "Failed to revoke invitation",
+      "viewer": "Viewer",
+      "editor": "Editor",
+      "owner": "Owner",
+      "pending": "Pending",
+      "revoke": "Revoke",
+      "declined": "Declined",
+      "viewer_description": "Can view bookmarks in the list",
+      "editor_description": "Can add and remove bookmarks",
+      "no_collaborators": "No collaborators yet. Add someone to start collaborating!",
+      "no_collaborators_readonly": "No collaborators for this list.",
+      "people_with_access": "People who have access to this list",
+      "add_or_remove": "Add or remove people who can access this list"
+    },
+    "invitations": {
+      "pending": "Pending Invitations",
+      "description": "Review and respond to list collaboration invitations",
+      "invited_by": "Invited by",
+      "accept": "Accept",
+      "decline": "Decline",
+      "accepted": "Invitation accepted",
+      "declined": "Invitation declined",
+      "failed_to_accept": "Failed to accept invitation",
+      "failed_to_decline": "Failed to decline invitation"
+    },
+    "leave_list": {
+      "title": "Leave List",
+      "confirm_message": "Are you sure you want to leave {{icon}} {{name}}?",
+      "warning": "You will no longer be able to view or access bookmarks in this list. The list owner can add you back if needed.",
+      "action": "Leave List",
+      "success": "You have left \"{{icon}} {{name}}\""
     }
   },
   "tags": {
@@ -402,7 +676,18 @@
     "delete_all_unused_tags": "Delete All Unused Tags",
     "drag_and_drop_merging": "Drag & Drop Merging",
     "drag_and_drop_merging_info": "Drag and drop tags on each other to merge them",
-    "sort_by_name": "Sort by Name"
+    "sort_by_name": "Sort by Name",
+    "sort_by_usage": "Sort by Usage",
+    "sort_by_relevance": "Sort by Relevance",
+    "create_tag": "Create Tag",
+    "create_tag_description": "Create a new tag without attaching it to any bookmark",
+    "tag_name": "Tag Name",
+    "enter_tag_name": "Enter tag name",
+    "no_custom_tags": "No custom tags yet",
+    "no_ai_tags": "No AI tags yet",
+    "no_unused_tags": "You don't have any unused tags",
+    "no_unused_tags_match_your_search": "No unused tags match your search",
+    "no_tags_match_your_search": "No tags match your search"
   },
   "search": {
     "is_favorited": "Is Favorited",
@@ -429,6 +714,8 @@
     "year_s_ago": " Year(s) Ago",
     "url_contains": "URL Contains",
     "url_does_not_contain": "URL Does Not Contain",
+    "title_contains": "Title Contains",
+    "title_does_not_contain": "Title Does Not Contain",
     "is_in_list": "Is In List",
     "is_not_in_list": "Is not In List",
     "has_tag": "Has Tag",
@@ -438,21 +725,28 @@
     "type_is_not": "Type is not",
     "is_from_feed": "Is from RSS Feed",
     "is_not_from_feed": "Is not from RSS Feed",
+    "is_broken_link": "Has Broken Link",
+    "is_not_broken_link": "Has Working Link",
     "and": "And",
     "or": "Or",
-    "history": "Recent Searches"
+    "history": "Recent Searches",
+    "filters": "Filters",
+    "tags": "Tags",
+    "lists": "Lists",
+    "feeds": "Feeds",
+    "no_suggestions": "No suggestions"
   },
   "preview": {
     "view_original": "View Original",
     "cached_content": "Cached Content",
     "reader_view": "Reader View",
+    "archive_info": "Archives may not render correctly inline if they require Javascript. For best results, <1>download it and open in your browser</1>.",
     "tabs": {
       "content": "Content",
       "details": "Details"
     }
   },
   "editor": {
-    "quickly_focus": "You can quickly focus on this field by pressing ⌘ + E",
     "multiple_urls_dialog_title": "Importing URLs as separate Bookmarks?",
     "multiple_urls_dialog_desc": "The input contains multiple URLs on separate lines. Do you want to import them as separate bookmarks?",
     "import_as_text": "Import as Text Bookmark",
@@ -522,6 +816,7 @@
       "deleted": "The bookmark has been deleted!",
       "refetch": "Re-fetch has been enqueued!",
       "full_page_archive": "Full Page Archive creation has been triggered",
+      "preserve_pdf": "PDF preservation has been triggered",
       "delete_from_list": "The bookmark has been deleted from the list",
       "clipboard_copied": "Link has been added to your clipboard!"
     },
@@ -530,6 +825,10 @@
       "updated": "List has been updated!",
       "merged": "List has been merged!",
       "deleted": "List has been deleted!"
+    },
+    "tags": {
+      "created": "Tag has been created!",
+      "failed_to_create": "Failed to create tag"
     }
   },
   "banners": {
@@ -554,5 +853,15 @@
     "pick_a_date": "Pick a date",
     "save_changes": "Save changes",
     "extracted_content": "Extracted Content"
+  },
+  "version": {
+    "new_release_available": "New release notes available",
+    "whats_new_title": "What's new in v{{version}}",
+    "release_notes_description": "Here are the latest updates fetched from the GitHub release notes.",
+    "loading_release_notes": "Loading release notes…",
+    "unable_to_load_release_notes": "Unable to load release notes right now. Please try again later.",
+    "no_release_notes": "No release notes were published for this version.",
+    "release_notes_synced": "Release notes are synced from GitHub.",
+    "view_on_github": "View on GitHub"
   }
 }

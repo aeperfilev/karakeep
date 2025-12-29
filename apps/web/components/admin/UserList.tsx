@@ -2,6 +2,7 @@
 
 import { ActionButton } from "@/components/ui/action-button";
 import { ButtonWithTooltip } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 import LoadingSpinner from "@/components/ui/spinner";
 import {
   Table,
@@ -11,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/components/ui/use-toast";
 import { useTranslation } from "@/lib/i18n/client";
 import { api } from "@/lib/trpc";
 import { Check, KeyRound, Pencil, Trash, UserPlus, X } from "lucide-react";
@@ -72,13 +72,15 @@ export default function UsersSection() {
 
           <Table>
             <TableHeader className="bg-gray-200">
-              <TableHead>{t("common.name")}</TableHead>
-              <TableHead>{t("common.email")}</TableHead>
-              <TableHead>{t("admin.users_list.num_bookmarks")}</TableHead>
-              <TableHead>{t("admin.users_list.asset_sizes")}</TableHead>
-              <TableHead>{t("common.role")}</TableHead>
-              <TableHead>{t("admin.users_list.local_user")}</TableHead>
-              <TableHead>{t("common.actions")}</TableHead>
+              <TableRow>
+                <TableHead>{t("common.name")}</TableHead>
+                <TableHead>{t("common.email")}</TableHead>
+                <TableHead>{t("admin.users_list.num_bookmarks")}</TableHead>
+                <TableHead>{t("admin.users_list.asset_sizes")}</TableHead>
+                <TableHead>{t("common.role")}</TableHead>
+                <TableHead>{t("admin.users_list.local_user")}</TableHead>
+                <TableHead>{t("common.actions")}</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
               {users.users.map((u) => (

@@ -5,12 +5,14 @@ import {
   gt,
   gte,
   isNotNull,
+  isNull,
   like,
   lt,
   lte,
   ne,
   notExists,
   notLike,
+  or,
 } from "drizzle-orm";
 
 import {
@@ -245,6 +247,50 @@ async function getIds(
             ),
         );
     }
+    case "title": {
+      const comp = matcher.inverse ? notLike : like;
+      if (matcher.inverse) {
+        return db
+          .select({ id: bookmarks.id })
+          .from(bookmarks)
+          .leftJoin(bookmarkLinks, eq(bookmarks.id, bookmarkLinks.id))
+          .where(
+            and(
+              eq(bookmarks.userId, userId),
+              or(
+                isNull(bookmarks.title),
+                comp(bookmarks.title, `%${matcher.title}%`),
+              ),
+              or(
+                isNull(bookmarkLinks.title),
+                comp(bookmarkLinks.title, `%${matcher.title}%`),
+              ),
+            ),
+          );
+      }
+
+      return db
+        .select({ id: bookmarks.id })
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            comp(bookmarks.title, `%${matcher.title}%`),
+          ),
+        )
+        .union(
+          db
+            .select({ id: bookmarkLinks.id })
+            .from(bookmarkLinks)
+            .leftJoin(bookmarks, eq(bookmarks.id, bookmarkLinks.id))
+            .where(
+              and(
+                eq(bookmarks.userId, userId),
+                comp(bookmarkLinks.title, `%${matcher.title}%`),
+              ),
+            ),
+        );
+    }
     case "favourited": {
       return db
         .select({ id: bookmarks.id })
@@ -301,6 +347,29 @@ async function getIds(
           and(
             eq(bookmarks.userId, userId),
             comp(bookmarks.type, matcher.typeName),
+          ),
+        );
+    }
+    case "brokenLinks": {
+      // Only applies to bookmarks of type LINK
+      return db
+        .select({ id: bookmarkLinks.id })
+        .from(bookmarkLinks)
+        .leftJoin(bookmarks, eq(bookmarks.id, bookmarkLinks.id))
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            matcher.brokenLinks
+              ? or(
+                  eq(bookmarkLinks.crawlStatus, "failure"),
+                  lt(bookmarkLinks.crawlStatusCode, 200),
+                  gt(bookmarkLinks.crawlStatusCode, 299),
+                )
+              : and(
+                  eq(bookmarkLinks.crawlStatus, "success"),
+                  gte(bookmarkLinks.crawlStatusCode, 200),
+                  lte(bookmarkLinks.crawlStatusCode, 299),
+                ),
           ),
         );
     }

@@ -4,9 +4,11 @@ import MobileSidebar from "@/components/shared/sidebar/MobileSidebar";
 import Sidebar from "@/components/shared/sidebar/Sidebar";
 import SidebarLayout from "@/components/shared/sidebar/SidebarLayout";
 import { Separator } from "@/components/ui/separator";
+import { ReaderSettingsProvider } from "@/lib/readerSettings";
 import { UserSettingsContextProvider } from "@/lib/userSettings";
 import { api } from "@/server/api/client";
 import { getServerAuthSession } from "@/server/auth";
+import { TRPCError } from "@trpc/server";
 import { TFunction } from "i18next";
 import {
   Archive,
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { PluginManager, PluginType } from "@karakeep/shared/plugins";
+import { tryCatch } from "@karakeep/shared/tryCatch";
 
 export default async function Dashboard({
   children,
@@ -32,9 +35,25 @@ export default async function Dashboard({
   }
 
   const [lists, userSettings] = await Promise.all([
-    api.lists.list(),
-    api.users.settings(),
+    tryCatch(api.lists.list()),
+    tryCatch(api.users.settings()),
   ]);
+
+  if (userSettings.error) {
+    if (userSettings.error instanceof TRPCError) {
+      if (
+        userSettings.error.code === "NOT_FOUND" ||
+        userSettings.error.code === "UNAUTHORIZED"
+      ) {
+        redirect("/logout");
+      }
+    }
+    throw userSettings.error;
+  }
+
+  if (lists.error) {
+    throw lists.error;
+  }
 
   const items = (t: TFunction) =>
     [
@@ -79,24 +98,26 @@ export default async function Dashboard({
   ];
 
   return (
-    <UserSettingsContextProvider userSettings={userSettings}>
-      <SidebarLayout
-        sidebar={
-          <Sidebar
-            items={items}
-            extraSections={
-              <>
-                <Separator />
-                <AllLists initialData={lists} />
-              </>
-            }
-          />
-        }
-        mobileSidebar={<MobileSidebar items={mobileSidebar} />}
-        modal={modal}
-      >
-        {children}
-      </SidebarLayout>
+    <UserSettingsContextProvider userSettings={userSettings.data}>
+      <ReaderSettingsProvider>
+        <SidebarLayout
+          sidebar={
+            <Sidebar
+              items={items}
+              extraSections={
+                <>
+                  <Separator />
+                  <AllLists initialData={lists.data} />
+                </>
+              }
+            />
+          }
+          mobileSidebar={<MobileSidebar items={mobileSidebar} />}
+          modal={modal}
+        >
+          {children}
+        </SidebarLayout>
+      </ReaderSettingsProvider>
     </UserSettingsContextProvider>
   );
 }

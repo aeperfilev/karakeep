@@ -161,6 +161,17 @@ export default function QueryExplainerTooltip({
             <TableCell>{matcher.url}</TableCell>
           </TableRow>
         );
+      case "title":
+        return (
+          <TableRow>
+            <TableCell>
+              {matcher.inverse
+                ? t("search.title_does_not_contain")
+                : t("search.title_contains")}
+            </TableCell>
+            <TableCell>{matcher.title}</TableCell>
+          </TableRow>
+        );
       case "rssFeedName":
         return (
           <TableRow>
@@ -184,6 +195,16 @@ export default function QueryExplainerTooltip({
                 text: t("common.bookmark_types.text"),
                 asset: t("common.bookmark_types.media"),
               })}
+            </TableCell>
+          </TableRow>
+        );
+      case "brokenLinks":
+        return (
+          <TableRow>
+            <TableCell colSpan={2} className="text-center">
+              {matcher.brokenLinks
+                ? t("search.is_broken_link")
+                : t("search.is_not_broken_link")}
             </TableCell>
           </TableRow>
         );

@@ -1,26 +1,31 @@
-import { and, Column, eq, inArray, sql } from "drizzle-orm";
-import { DequeuedJob, EnqueueOptions } from "liteque";
+import { and, eq, inArray } from "drizzle-orm";
 import { buildImpersonatingTRPCClient } from "trpc";
 import { z } from "zod";
 
-import type { InferenceClient } from "@karakeep/shared/inference";
-import type { ZOpenAIRequest } from "@karakeep/shared/queues";
+import type { ZOpenAIRequest } from "@karakeep/shared-server";
+import type {
+  InferenceClient,
+  InferenceResponse,
+} from "@karakeep/shared/inference";
+import type { ZTagStyle } from "@karakeep/shared/types/users";
 import { db } from "@karakeep/db";
 import {
   bookmarks,
   bookmarkTags,
   customPrompts,
   tagsOnBookmarks,
+  users,
 } from "@karakeep/db/schema";
-import { readAsset } from "@karakeep/shared/assetdb";
-import serverConfig from "@karakeep/shared/config";
-import logger from "@karakeep/shared/logger";
-import { buildImagePrompt, buildTextPrompt } from "@karakeep/shared/prompts";
 import {
   triggerRuleEngineOnEvent,
   triggerSearchReindex,
   triggerWebhook,
-} from "@karakeep/shared/queues";
+} from "@karakeep/shared-server";
+import { ASSET_TYPES, readAsset } from "@karakeep/shared/assetdb";
+import serverConfig from "@karakeep/shared/config";
+import logger from "@karakeep/shared/logger";
+import { buildImagePrompt, buildTextPrompt } from "@karakeep/shared/prompts";
+import { DequeuedJob, EnqueueOptions } from "@karakeep/shared/queueing";
 import { Bookmark } from "@karakeep/trpc/models/bookmarks";
 
 const openAIResponseSchema = z.object({
@@ -63,19 +68,21 @@ function parseJsonFromLLMResponse(response: string): unknown {
   }
 }
 
-function tagNormalizer(col: Column) {
+function tagNormalizer() {
+  // This function needs to be in sync with the generated normalizedName column in bookmarkTags
   function normalizeTag(tag: string) {
     return tag.toLowerCase().replace(/[ \-_]/g, "");
   }
 
   return {
     normalizeTag,
-    sql: sql`lower(replace(replace(replace(${col}, ' ', ''), '-', ''), '_', ''))`,
   };
 }
 async function buildPrompt(
   bookmark: NonNullable<Awaited<ReturnType<typeof fetchBookmark>>>,
-) {
+  tagStyle: ZTagStyle,
+  inferredTagLang: string,
+): Promise<string | null> {
   const prompts = await fetchCustomPrompts(bookmark.userId, "text");
   if (bookmark.link) {
     let content =
@@ -85,27 +92,31 @@ async function buildPrompt(
       )) ?? "";
 
     if (!bookmark.link.description && !content) {
-      throw new Error(
-        `No content found for link "${bookmark.id}". Skipping ...`,
+      // No content to infer from; signal skip to avoid marking job as failed
+      logger.info(
+        `[inference] No content found for link "${bookmark.id}". Skipping tagging.`,
       );
+      return null;
     }
-    return buildTextPrompt(
-      serverConfig.inference.inferredTagLang,
+    return await buildTextPrompt(
+      inferredTagLang,
       prompts,
       `URL: ${bookmark.link.url}
 Title: ${bookmark.link.title ?? ""}
 Description: ${bookmark.link.description ?? ""}
 Content: ${content ?? ""}`,
       serverConfig.inference.contextLength,
+      tagStyle,
     );
   }
 
   if (bookmark.text) {
-    return buildTextPrompt(
-      serverConfig.inference.inferredTagLang,
+    return await buildTextPrompt(
+      inferredTagLang,
       prompts,
       bookmark.text.text ?? "",
       serverConfig.inference.contextLength,
+      tagStyle,
     );
   }
 
@@ -117,7 +128,9 @@ async function inferTagsFromImage(
   bookmark: NonNullable<Awaited<ReturnType<typeof fetchBookmark>>>,
   inferenceClient: InferenceClient,
   abortSignal: AbortSignal,
-) {
+  tagStyle: ZTagStyle,
+  inferredTagLang: string,
+): Promise<InferenceResponse | null> {
   const { asset, metadata } = await readAsset({
     userId: bookmark.userId,
     assetId: bookmark.asset.assetId,
@@ -128,12 +141,19 @@ async function inferTagsFromImage(
       `[inference][${jobId}] AssetId ${bookmark.asset.assetId} for bookmark ${bookmark.id} not found`,
     );
   }
+  if (metadata.contentType === ASSET_TYPES.IMAGE_GIF) {
+    logger.info(
+      `[inference][${jobId}] Skipping inference for bookmark with id "${bookmark.id}" because it's a GIF.`,
+    );
+    return null;
+  }
 
   const base64 = asset.toString("base64");
   return inferenceClient.inferFromImage(
     buildImagePrompt(
-      serverConfig.inference.inferredTagLang,
+      inferredTagLang,
       await fetchCustomPrompts(bookmark.userId, "images"),
+      tagStyle,
     ),
     metadata.contentType,
     base64,
@@ -168,7 +188,7 @@ async function replaceTagsPlaceholders(
   userId: string,
 ): Promise<string[]> {
   const api = await buildImpersonatingTRPCClient(userId);
-  const tags = (await api.tags.list()).tags;
+  const tags = (await api.tags.list({})).tags;
   const tagsString = `[${tags.map((tag) => tag.name).join(", ")}]`;
   const aiTagsString = `[${tags
     .filter((tag) => tag.numBookmarksByAttachedType.human ?? true)
@@ -203,12 +223,15 @@ async function inferTagsFromPDF(
   bookmark: NonNullable<Awaited<ReturnType<typeof fetchBookmark>>>,
   inferenceClient: InferenceClient,
   abortSignal: AbortSignal,
+  tagStyle: ZTagStyle,
+  inferredTagLang: string,
 ) {
-  const prompt = buildTextPrompt(
-    serverConfig.inference.inferredTagLang,
+  const prompt = await buildTextPrompt(
+    inferredTagLang,
     await fetchCustomPrompts(bookmark.userId, "text"),
     `Content: ${bookmark.asset.content}`,
     serverConfig.inference.contextLength,
+    tagStyle,
   );
   return inferenceClient.inferFromText(prompt, {
     schema: openAIResponseSchema,
@@ -220,8 +243,14 @@ async function inferTagsFromText(
   bookmark: NonNullable<Awaited<ReturnType<typeof fetchBookmark>>>,
   inferenceClient: InferenceClient,
   abortSignal: AbortSignal,
+  tagStyle: ZTagStyle,
+  inferredTagLang: string,
 ) {
-  return await inferenceClient.inferFromText(await buildPrompt(bookmark), {
+  const prompt = await buildPrompt(bookmark, tagStyle, inferredTagLang);
+  if (!prompt) {
+    return null;
+  }
+  return await inferenceClient.inferFromText(prompt, {
     schema: openAIResponseSchema,
     abortSignal,
   });
@@ -232,10 +261,18 @@ async function inferTags(
   bookmark: NonNullable<Awaited<ReturnType<typeof fetchBookmark>>>,
   inferenceClient: InferenceClient,
   abortSignal: AbortSignal,
+  tagStyle: ZTagStyle,
+  inferredTagLang: string,
 ) {
-  let response;
+  let response: InferenceResponse | null;
   if (bookmark.link || bookmark.text) {
-    response = await inferTagsFromText(bookmark, inferenceClient, abortSignal);
+    response = await inferTagsFromText(
+      bookmark,
+      inferenceClient,
+      abortSignal,
+      tagStyle,
+      inferredTagLang,
+    );
   } else if (bookmark.asset) {
     switch (bookmark.asset.assetType) {
       case "image":
@@ -244,6 +281,8 @@ async function inferTags(
           bookmark,
           inferenceClient,
           abortSignal,
+          tagStyle,
+          inferredTagLang,
         );
         break;
       case "pdf":
@@ -252,6 +291,8 @@ async function inferTags(
           bookmark,
           inferenceClient,
           abortSignal,
+          tagStyle,
+          inferredTagLang,
         );
         break;
       default:
@@ -262,7 +303,8 @@ async function inferTags(
   }
 
   if (!response) {
-    throw new Error(`[inference][${jobId}] Inference response is empty`);
+    // Skipped due to missing content or prompt; propagate skip
+    return null;
   }
 
   try {
@@ -301,12 +343,10 @@ async function connectTags(
     return;
   }
 
-  await db.transaction(async (tx) => {
+  const res = await db.transaction(async (tx) => {
     // Attempt to match exiting tags with the new ones
     const { matchedTagIds, notFoundTagNames } = await (async () => {
-      const { normalizeTag, sql: normalizedTagSql } = tagNormalizer(
-        bookmarkTags.name,
-      );
+      const { normalizeTag } = tagNormalizer();
       const normalizedInferredTags = inferredTags.map((t) => ({
         originalTag: t,
         normalizedTag: normalizeTag(t),
@@ -316,7 +356,7 @@ async function connectTags(
         where: and(
           eq(bookmarkTags.userId, userId),
           inArray(
-            normalizedTagSql,
+            bookmarkTags.normalizedName,
             normalizedInferredTags.map((t) => t.normalizedTag),
           ),
         ),
@@ -378,17 +418,19 @@ async function connectTags(
       .onConflictDoNothing()
       .returning();
 
-    await triggerRuleEngineOnEvent(bookmarkId, [
-      ...detachedTags.map((t) => ({
-        type: "tagRemoved" as const,
-        tagId: t.tagId,
-      })),
-      ...attachedTags.map((t) => ({
-        type: "tagAdded" as const,
-        tagId: t.tagId,
-      })),
-    ]);
+    return { detachedTags, attachedTags };
   });
+
+  await triggerRuleEngineOnEvent(bookmarkId, [
+    ...res.detachedTags.map((t) => ({
+      type: "tagRemoved" as const,
+      tagId: t.tagId,
+    })),
+    ...res.attachedTags.map((t) => ({
+      type: "tagAdded" as const,
+      tagId: t.tagId,
+    })),
+  ]);
 }
 
 async function fetchBookmark(linkId: string) {
@@ -408,7 +450,7 @@ export async function runTagging(
   inferenceClient: InferenceClient,
 ) {
   if (!serverConfig.inference.enableAutoTagging) {
-    logger.info(
+    logger.debug(
       `[inference][${job.id}] Skipping tagging job for bookmark with id "${bookmarkId}" because it's disabled in the config.`,
     );
     return;
@@ -421,6 +463,23 @@ export async function runTagging(
     );
   }
 
+  // Check user-level preference
+  const userSettings = await db.query.users.findFirst({
+    where: eq(users.id, bookmark.userId),
+    columns: {
+      autoTaggingEnabled: true,
+      tagStyle: true,
+      inferredTagLang: true,
+    },
+  });
+
+  if (userSettings?.autoTaggingEnabled === false) {
+    logger.debug(
+      `[inference][${jobId}] Skipping tagging job for bookmark with id "${bookmarkId}" because user has disabled auto-tagging.`,
+    );
+    return;
+  }
+
   logger.info(
     `[inference][${jobId}] Starting an inference job for bookmark with id "${bookmark.id}"`,
   );
@@ -430,13 +489,23 @@ export async function runTagging(
     bookmark,
     inferenceClient,
     job.abortSignal,
+    userSettings?.tagStyle ?? "as-generated",
+    userSettings?.inferredTagLang ?? serverConfig.inference.inferredTagLang,
   );
+
+  if (tags === null) {
+    logger.info(
+      `[inference][${jobId}] Skipping tagging for bookmark "${bookmark.id}" due to missing content.`,
+    );
+    return;
+  }
 
   await connectTags(bookmarkId, tags, bookmark.userId);
 
   // Propagate priority to child jobs
   const enqueueOpts: EnqueueOptions = {
     priority: job.priority,
+    groupId: bookmark.userId,
   };
 
   // Trigger a webhook

@@ -3,8 +3,10 @@ import * as os from "os";
 import * as path from "path";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
+import { fileTypeFromBlob, supportedMimeTypes } from "file-type";
 
 import { assets, AssetTypes } from "@karakeep/db/schema";
+import { QuotaService, StorageQuotaError } from "@karakeep/shared-server";
 import {
   newAssetId,
   saveAssetFromFile,
@@ -12,10 +14,6 @@ import {
 } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
 import { AuthedContext } from "@karakeep/trpc";
-import {
-  checkStorageQuota,
-  StorageQuotaError,
-} from "@karakeep/trpc/lib/storageQuota";
 
 const MAX_UPLOAD_SIZE_BYTES = serverConfig.maxAssetSizeMb * 1024 * 1024;
 
@@ -61,8 +59,18 @@ export async function uploadAsset(
     data = formData.image;
   }
 
-  const contentType = data.type;
-  const fileName = data.name;
+  const detectedType = await fileTypeFromBlob(data);
+  const fallbackType =
+    data.type && data.type.trim().length > 0 ? data.type : null;
+  // Security: reject browser-provided MIME when we cannot sniff a valid type.
+  if (fallbackType && supportedMimeTypes.has(fallbackType) && !detectedType) {
+    return { error: "Unsupported asset type", status: 400 };
+  }
+  const contentType =
+    detectedType?.mime ?? fallbackType ?? "application/octet-stream";
+
+  // Replace all non-ascii characters with underscores
+  const fileName = data.name.replace(/[^\x20-\x7E]/g, "_");
   if (!SUPPORTED_UPLOAD_ASSET_TYPES.has(contentType)) {
     return { error: "Unsupported asset type", status: 400 };
   }
@@ -72,7 +80,11 @@ export async function uploadAsset(
 
   let quotaApproved;
   try {
-    quotaApproved = await checkStorageQuota(db, user.id, data.size);
+    quotaApproved = await QuotaService.checkStorageQuota(
+      db,
+      user.id,
+      data.size,
+    );
   } catch (error) {
     if (error instanceof StorageQuotaError) {
       return { error: error.message, status: 403 };
@@ -118,7 +130,13 @@ export async function uploadAsset(
       fileName,
     };
   } finally {
-    if (tempFilePath) {
+    if (
+      tempFilePath &&
+      (await fs.promises
+        .access(tempFilePath)
+        .then(() => true)
+        .catch(() => false))
+    ) {
       await fs.promises.unlink(tempFilePath).catch(() => ({}));
     }
   }

@@ -1,7 +1,11 @@
+import { adminCmd } from "@/commands/admin";
 import { bookmarkCmd } from "@/commands/bookmarks";
+import { dumpCmd } from "@/commands/dump";
 import { listsCmd } from "@/commands/lists";
+import { migrateCmd } from "@/commands/migrate";
 import { tagsCmd } from "@/commands/tags";
 import { whoamiCmd } from "@/commands/whoami";
+import { wipeCmd } from "@/commands/wipe";
 import { setGlobalOptions } from "@/lib/globals";
 import { Command, Option } from "@commander-js/extra-typings";
 
@@ -28,10 +32,14 @@ const program = new Command()
       : "0.0.0",
   );
 
+program.addCommand(adminCmd);
 program.addCommand(bookmarkCmd);
 program.addCommand(listsCmd);
 program.addCommand(tagsCmd);
 program.addCommand(whoamiCmd);
+program.addCommand(migrateCmd);
+program.addCommand(wipeCmd);
+program.addCommand(dumpCmd);
 
 setGlobalOptions(program.opts());
 

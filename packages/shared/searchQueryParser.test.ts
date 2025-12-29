@@ -123,6 +123,22 @@ describe("Search Query Parser", () => {
         inverse: true,
       },
     });
+    expect(parseSearchQuery("is:broken")).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "brokenLinks",
+        brokenLinks: true,
+      },
+    });
+    expect(parseSearchQuery("-is:broken")).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "brokenLinks",
+        brokenLinks: false,
+      },
+    });
   });
 
   test("simple string queries", () => {
@@ -159,6 +175,42 @@ describe("Search Query Parser", () => {
       matcher: {
         type: "url",
         url: "https://example.com",
+        inverse: true,
+      },
+    });
+    expect(parseSearchQuery("title:example")).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "title",
+        title: "example",
+        inverse: false,
+      },
+    });
+    expect(parseSearchQuery("-title:example")).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "title",
+        title: "example",
+        inverse: true,
+      },
+    });
+    expect(parseSearchQuery('title:"my title"')).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "title",
+        title: "my title",
+        inverse: false,
+      },
+    });
+    expect(parseSearchQuery('-title:"my title"')).toEqual({
+      result: "full",
+      text: "",
+      matcher: {
+        type: "title",
+        title: "my title",
         inverse: true,
       },
     });

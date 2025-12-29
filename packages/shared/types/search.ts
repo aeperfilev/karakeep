@@ -31,6 +31,12 @@ const zUrlMatcher = z.object({
   inverse: z.boolean(),
 });
 
+const zTitleMatcher = z.object({
+  type: z.literal("title"),
+  title: z.string(),
+  inverse: z.boolean(),
+});
+
 const zFavouritedMatcher = z.object({
   type: z.literal("favourited"),
   favourited: z.boolean(),
@@ -77,11 +83,17 @@ const zTypeMatcher = z.object({
   inverse: z.boolean(),
 });
 
+const zBrokenLinksMatcher = z.object({
+  type: z.literal("brokenLinks"),
+  brokenLinks: z.boolean(),
+});
+
 const zNonRecursiveMatcher = z.union([
   zTagNameMatcher,
   zListNameMatcher,
   zArchivedMatcher,
   zUrlMatcher,
+  zTitleMatcher,
   zFavouritedMatcher,
   zDateAfterMatcher,
   zDateBeforeMatcher,
@@ -90,6 +102,7 @@ const zNonRecursiveMatcher = z.union([
   zIsInListMatcher,
   zTypeMatcher,
   zRssFeedNameMatcher,
+  zBrokenLinksMatcher,
 ]);
 
 type NonRecursiveMatcher = z.infer<typeof zNonRecursiveMatcher>;
@@ -104,6 +117,7 @@ export const zMatcherSchema: z.ZodType<Matcher> = z.lazy(() => {
     zListNameMatcher,
     zArchivedMatcher,
     zUrlMatcher,
+    zTitleMatcher,
     zFavouritedMatcher,
     zDateAfterMatcher,
     zDateBeforeMatcher,
@@ -112,6 +126,7 @@ export const zMatcherSchema: z.ZodType<Matcher> = z.lazy(() => {
     zIsInListMatcher,
     zTypeMatcher,
     zRssFeedNameMatcher,
+    zBrokenLinksMatcher,
     z.object({
       type: z.literal("and"),
       matchers: z.array(zMatcherSchema),

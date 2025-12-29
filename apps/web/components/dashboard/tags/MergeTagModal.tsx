@@ -18,14 +18,14 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useMergeTag } from "@karakeep/shared-react/hooks/tags";
 
-import { TagSelector } from "./TagSelector";
+import { TagAutocomplete } from "./TagAutocomplete";
 
 export function MergeTagModal({
   open,
@@ -119,10 +119,10 @@ export function MergeTagModal({
                 return (
                   <FormItem className="grow py-4">
                     <FormControl>
-                      <TagSelector
-                        value={field.value}
+                      <TagAutocomplete
+                        tagId={field.value}
                         onChange={field.onChange}
-                        placeholder="Select a tag to merge into"
+                        className="w-full"
                       />
                     </FormControl>
                     <FormMessage />

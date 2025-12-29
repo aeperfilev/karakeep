@@ -1,6 +1,7 @@
 import { Ollama } from "ollama";
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
+import * as undici from "undici";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -68,9 +69,18 @@ class OpenAIInferenceClient implements InferenceClient {
   openAI: OpenAI;
 
   constructor() {
+    const fetchOptions = serverConfig.inference.openAIProxyUrl
+      ? {
+          dispatcher: new undici.ProxyAgent(
+            serverConfig.inference.openAIProxyUrl,
+          ),
+        }
+      : undefined;
+
     this.openAI = new OpenAI({
       apiKey: serverConfig.inference.openAIApiKey,
       baseURL: serverConfig.inference.openAIBaseUrl,
+      ...(fetchOptions ? { fetchOptions } : {}),
       defaultHeaders: {
         "X-Title": "Karakeep",
         "HTTP-Referer": "https://karakeep.app",
@@ -90,7 +100,9 @@ class OpenAIInferenceClient implements InferenceClient {
       {
         messages: [{ role: "user", content: prompt }],
         model: serverConfig.inference.textModel,
-        max_tokens: serverConfig.inference.maxOutputTokens,
+        ...(serverConfig.inference.useMaxCompletionTokens
+          ? { max_completion_tokens: serverConfig.inference.maxOutputTokens }
+          : { max_tokens: serverConfig.inference.maxOutputTokens }),
         response_format: mapInferenceOutputSchema(
           {
             structured: optsWithDefaults.schema
@@ -127,7 +139,9 @@ class OpenAIInferenceClient implements InferenceClient {
     const chatCompletion = await this.openAI.chat.completions.create(
       {
         model: serverConfig.inference.imageModel,
-        max_tokens: serverConfig.inference.maxOutputTokens,
+        ...(serverConfig.inference.useMaxCompletionTokens
+          ? { max_completion_tokens: serverConfig.inference.maxOutputTokens }
+          : { max_tokens: serverConfig.inference.maxOutputTokens }),
         response_format: mapInferenceOutputSchema(
           {
             structured: optsWithDefaults.schema

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import ImageView from "react-native-image-viewing";
 import WebView from "react-native-webview";
 import { WebViewSourceUri } from "react-native-webview/lib/WebViewTypes";
+import { Text } from "@/components/ui/Text";
 import { useAssetUrl } from "@/lib/hooks";
+import { useReaderSettings, WEBVIEW_FONT_FAMILIES } from "@/lib/readerSettings";
 import { api } from "@/lib/trpc";
-import { useColorScheme } from "nativewind";
+import { useColorScheme } from "@/lib/useColorScheme";
 
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 
@@ -36,7 +38,8 @@ export function BookmarkLinkReaderPreview({
 }: {
   bookmark: ZBookmark;
 }) {
-  const { colorScheme } = useColorScheme();
+  const { isDarkColorScheme: isDark } = useColorScheme();
+  const { settings: readerSettings } = useReaderSettings();
 
   const {
     data: bookmarkWithContent,
@@ -60,7 +63,9 @@ export function BookmarkLinkReaderPreview({
     throw new Error("Wrong content type rendered");
   }
 
-  const isDark = colorScheme === "dark";
+  const fontFamily = WEBVIEW_FONT_FAMILIES[readerSettings.fontFamily];
+  const fontSize = readerSettings.fontSize;
+  const lineHeight = readerSettings.lineHeight;
 
   return (
     <View className="flex-1 bg-background">
@@ -74,8 +79,9 @@ export function BookmarkLinkReaderPreview({
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                   <style>
                     body {
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-                      line-height: 1.6;
+                      font-family: ${fontFamily};
+                      font-size: ${fontSize}px;
+                      line-height: ${lineHeight};
                       color: ${isDark ? "#e5e7eb" : "#374151"};
                       margin: 0;
                       padding: 16px;
@@ -86,17 +92,29 @@ export function BookmarkLinkReaderPreview({
                     img { max-width: 100%; height: auto; border-radius: 8px; }
                     a { color: #3b82f6; text-decoration: none; }
                     a:hover { text-decoration: underline; }
-                    blockquote { 
-                      border-left: 4px solid ${isDark ? "#374151" : "#e5e7eb"}; 
-                      margin: 1em 0; 
-                      padding-left: 1em; 
-                      color: ${isDark ? "#9ca3af" : "#6b7280"}; 
+                    blockquote {
+                      border-left: 4px solid ${isDark ? "#374151" : "#e5e7eb"};
+                      margin: 1em 0;
+                      padding-left: 1em;
+                      color: ${isDark ? "#9ca3af" : "#6b7280"};
                     }
-                    pre { 
-                      background: ${isDark ? "#1f2937" : "#f3f4f6"}; 
-                      padding: 1em; 
-                      border-radius: 6px; 
-                      overflow-x: auto; 
+                    pre, code {
+                      font-family: ui-monospace, Menlo, Monaco, 'Courier New', monospace;
+                      background: ${isDark ? "#1f2937" : "#f3f4f6"};
+                    }
+                    pre {
+                      padding: 1em;
+                      border-radius: 6px;
+                      overflow-x: auto;
+                    }
+                    code {
+                      padding: 0.2em 0.4em;
+                      border-radius: 3px;
+                      font-size: 0.9em;
+                    }
+                    pre code {
+                      padding: 0;
+                      background: none;
                     }
                   </style>
                 </head>
@@ -112,6 +130,7 @@ export function BookmarkLinkReaderPreview({
         }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
+        decelerationRate={0.998}
       />
     </View>
   );
@@ -145,6 +164,7 @@ export function BookmarkLinkArchivePreview({
       startInLoadingState={true}
       mediaPlaybackRequiresUserAction={true}
       source={webViewUri}
+      decelerationRate={0.998}
     />
   );
 }

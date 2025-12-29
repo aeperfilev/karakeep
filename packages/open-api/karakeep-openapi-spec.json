@@ -45,6 +45,10 @@
         "type": "string",
         "example": "ieidlxygmwj87oxz5hxttoc8"
       },
+      "BackupId": {
+        "type": "string",
+        "example": "ieidlxygmwj87oxz5hxttoc8"
+      },
       "Bookmark": {
         "type": "object",
         "properties": {
@@ -93,6 +97,23 @@
           "summary": {
             "type": "string",
             "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "api",
+              "web",
+              "cli",
+              "mobile",
+              "extension",
+              "singlefile",
+              "rss",
+              "import"
+            ]
+          },
+          "userId": {
+            "type": "string"
           },
           "tags": {
             "type": "array",
@@ -151,6 +172,10 @@
                     "nullable": true
                   },
                   "screenshotAssetId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "pdfAssetId": {
                     "type": "string",
                     "nullable": true
                   },
@@ -297,14 +322,21 @@
                   "enum": [
                     "linkHtmlContent",
                     "screenshot",
+                    "pdf",
                     "assetScreenshot",
                     "bannerImage",
                     "fullPageArchive",
                     "video",
                     "bookmarkAsset",
                     "precrawledArchive",
+                    "userUploaded",
+                    "avatar",
                     "unknown"
                   ]
+                },
+                "fileName": {
+                  "type": "string",
+                  "nullable": true
                 }
               },
               "required": [
@@ -322,6 +354,7 @@
           "favourited",
           "taggingStatus",
           "summarizationStatus",
+          "userId",
           "tags",
           "content",
           "assets"
@@ -348,6 +381,64 @@
       },
       "Cursor": {
         "type": "string"
+      },
+      "List": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "icon": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "smart"
+            ],
+            "default": "manual"
+          },
+          "query": {
+            "type": "string",
+            "nullable": true
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "hasCollaborators": {
+            "type": "boolean"
+          },
+          "userRole": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "editor",
+              "viewer",
+              "public"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon",
+          "parentId",
+          "public",
+          "hasCollaborators",
+          "userRole"
+        ]
       },
       "Highlight": {
         "type": "object",
@@ -398,50 +489,6 @@
           "id",
           "userId",
           "createdAt"
-        ]
-      },
-      "List": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "icon": {
-            "type": "string"
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "manual",
-              "smart"
-            ],
-            "default": "manual"
-          },
-          "query": {
-            "type": "string",
-            "nullable": true
-          },
-          "public": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "icon",
-          "parentId",
-          "public"
         ]
       },
       "Tag": {
@@ -558,6 +605,14 @@
         },
         "required": true,
         "name": "assetId",
+        "in": "path"
+      },
+      "BackupId": {
+        "schema": {
+          "$ref": "#/components/schemas/BackupId"
+        },
+        "required": true,
+        "name": "backupId",
         "in": "path"
       }
     }
@@ -693,6 +748,22 @@
                           "low",
                           "normal"
                         ]
+                      },
+                      "importSessionId": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "api",
+                          "web",
+                          "cli",
+                          "mobile",
+                          "extension",
+                          "singlefile",
+                          "rss",
+                          "import"
+                        ]
                       }
                     }
                   },
@@ -781,8 +852,18 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "The bookmark already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bookmark"
+                }
+              }
+            }
+          },
           "201": {
-            "description": "The created bookmark",
+            "description": "The bookmark got created",
             "content": {
               "application/json": {
                 "schema": {
@@ -1135,6 +1216,23 @@
                     "summary": {
                       "type": "string",
                       "nullable": true
+                    },
+                    "source": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "api",
+                        "web",
+                        "cli",
+                        "mobile",
+                        "extension",
+                        "singlefile",
+                        "rss",
+                        "import"
+                      ]
+                    },
+                    "userId": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -1144,7 +1242,8 @@
                     "archived",
                     "favourited",
                     "taggingStatus",
-                    "summarizationStatus"
+                    "summarizationStatus",
+                    "userId"
                   ]
                 }
               }
@@ -1245,6 +1344,23 @@
                     "summary": {
                       "type": "string",
                       "nullable": true
+                    },
+                    "source": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "api",
+                        "web",
+                        "cli",
+                        "mobile",
+                        "extension",
+                        "singlefile",
+                        "rss",
+                        "import"
+                      ]
+                    },
+                    "userId": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -1254,7 +1370,8 @@
                     "archived",
                     "favourited",
                     "taggingStatus",
-                    "summarizationStatus"
+                    "summarizationStatus",
+                    "userId"
                   ]
                 }
               }
@@ -1469,6 +1586,70 @@
         }
       }
     },
+    "/bookmarks/{bookmarkId}/lists": {
+      "get": {
+        "description": "Get lists of a bookmark",
+        "summary": "Get lists of a bookmark",
+        "tags": [
+          "Bookmarks"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of highlights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lists": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/List"
+                      }
+                    }
+                  },
+                  "required": [
+                    "lists"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bookmark not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bookmarks/{bookmarkId}/highlights": {
       "get": {
         "description": "Get highlights of a bookmark",
@@ -1565,12 +1746,15 @@
                     "enum": [
                       "linkHtmlContent",
                       "screenshot",
+                      "pdf",
                       "assetScreenshot",
                       "bannerImage",
                       "fullPageArchive",
                       "video",
                       "bookmarkAsset",
                       "precrawledArchive",
+                      "userUploaded",
+                      "avatar",
                       "unknown"
                     ]
                   }
@@ -1599,14 +1783,21 @@
                       "enum": [
                         "linkHtmlContent",
                         "screenshot",
+                        "pdf",
                         "assetScreenshot",
                         "bannerImage",
                         "fullPageArchive",
                         "video",
                         "bookmarkAsset",
                         "precrawledArchive",
+                        "userUploaded",
+                        "avatar",
                         "unknown"
                       ]
+                    },
+                    "fileName": {
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -1813,12 +2004,12 @@
                   "name": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 40
+                    "maxLength": 100
                   },
                   "description": {
                     "type": "string",
                     "minLength": 0,
-                    "maxLength": 100
+                    "maxLength": 500
                   },
                   "icon": {
                     "type": "string"
@@ -2006,13 +2197,13 @@
                   "name": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 40
+                    "maxLength": 100
                   },
                   "description": {
                     "type": "string",
                     "nullable": true,
                     "minLength": 0,
-                    "maxLength": 100
+                    "maxLength": 500
                   },
                   "icon": {
                     "type": "string"
@@ -2292,6 +2483,60 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "nameContains",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "usage",
+                "relevance"
+              ],
+              "default": "usage"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai",
+                "human",
+                "none"
+              ]
+            },
+            "required": false,
+            "name": "attachedBy",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Object with all tags data.",
@@ -2305,10 +2550,15 @@
                       "items": {
                         "$ref": "#/components/schemas/Tag"
                       }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
-                    "tags"
+                    "tags",
+                    "nextCursor"
                   ]
                 }
               }
@@ -2931,6 +3181,10 @@
                       "green",
                       "blue"
                     ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -3001,6 +3255,10 @@
                       "nullable": true
                     },
                     "email": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "image": {
                       "type": "string",
                       "nullable": true
                     },
@@ -3195,6 +3453,35 @@
                         ]
                       },
                       "maxItems": 10
+                    },
+                    "bookmarksBySource": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "api",
+                              "web",
+                              "cli",
+                              "mobile",
+                              "extension",
+                              "singlefile",
+                              "rss",
+                              "import"
+                            ]
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "source",
+                          "count"
+                        ]
+                      }
                     }
                   },
                   "required": [
@@ -3209,7 +3496,8 @@
                     "totalAssetSize",
                     "assetsByType",
                     "bookmarkingActivity",
-                    "tagUsage"
+                    "tagUsage",
+                    "bookmarksBySource"
                   ]
                 }
               }
@@ -3434,6 +3722,341 @@
                   },
                   "required": [
                     "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backups": {
+      "get": {
+        "description": "Get all backups",
+        "summary": "Get all backups",
+        "tags": [
+          "Backups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object with all backups data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "backups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "assetId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "size": {
+                            "type": "number"
+                          },
+                          "bookmarkCount": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "success",
+                              "failure"
+                            ]
+                          },
+                          "errorMessage": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "userId",
+                          "assetId",
+                          "createdAt",
+                          "size",
+                          "bookmarkCount",
+                          "status"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "backups"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Trigger a new backup",
+        "summary": "Trigger a new backup",
+        "tags": [
+          "Backups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Backup created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "assetId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "bookmarkCount": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "success",
+                        "failure"
+                      ]
+                    },
+                    "errorMessage": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "assetId",
+                    "createdAt",
+                    "size",
+                    "bookmarkCount",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backups/{backupId}": {
+      "get": {
+        "description": "Get backup by its id",
+        "summary": "Get a single backup",
+        "tags": [
+          "Backups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BackupId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object with backup data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "assetId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "bookmarkCount": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "success",
+                        "failure"
+                      ]
+                    },
+                    "errorMessage": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "assetId",
+                    "createdAt",
+                    "size",
+                    "bookmarkCount",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Backup not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete backup by its id",
+        "summary": "Delete a backup",
+        "tags": [
+          "Backups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BackupId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content - the backup was deleted"
+          },
+          "404": {
+            "description": "Backup not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backups/{backupId}/download": {
+      "get": {
+        "description": "Download backup file",
+        "summary": "Download a backup",
+        "tags": [
+          "Backups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BackupId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backup file (zip archive)",
+            "content": {
+              "application/zip": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Backup not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
                   ]
                 }
               }

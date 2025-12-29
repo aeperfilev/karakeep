@@ -11,6 +11,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { toast } from "@/components/ui/sonner";
 import LoadingSpinner from "@/components/ui/spinner";
 import {
   Table,
@@ -20,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/components/ui/use-toast";
 import { useTranslation } from "@/lib/i18n/client";
 import { api } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -200,15 +200,18 @@ function SuggestionRow({
 
 export function TagDuplicationDetection() {
   const [expanded, setExpanded] = useState(false);
-  let { data: allTags } = api.tags.list.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  let { data: allTags } = api.tags.list.useQuery(
+    {},
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
 
   const { suggestions, updateMergeInto, setSuggestions, deleteSuggestion } =
     useSuggestions();
 
   useEffect(() => {
-    allTags = allTags ?? { tags: [] };
+    allTags = allTags ?? { tags: [], nextCursor: null };
     const sortedTags = allTags.tags.sort((a, b) =>
       normalizeTag(a.name).localeCompare(normalizeTag(b.name)),
     );

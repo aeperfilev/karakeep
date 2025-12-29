@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Link, router } from "expo-router";
 import FullPageError from "@/components/FullPageError";
-import { TailwindResolver } from "@/components/TailwindResolver";
+import ChevronRight from "@/components/ui/ChevronRight";
 import CustomSafeAreaView from "@/components/ui/CustomSafeAreaView";
 import FullPageSpinner from "@/components/ui/FullPageSpinner";
 import PageTitle from "@/components/ui/PageTitle";
+import { Text } from "@/components/ui/Text";
 import { api } from "@/lib/trpc";
+import { useColorScheme } from "@/lib/useColorScheme";
 import { condProps } from "@/lib/utils";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 
 import { useBookmarkLists } from "@karakeep/shared-react/hooks/lists";
 import { ZBookmarkListTreeNode } from "@karakeep/shared/utils/listUtils";
@@ -37,6 +39,7 @@ interface ListLink {
   parent?: string;
   numChildren: number;
   collapsed: boolean;
+  isSharedSection?: boolean;
 }
 
 function traverseTree(
@@ -65,12 +68,18 @@ function traverseTree(
 }
 
 export default function Lists() {
+  const { colors } = useColorScheme();
   const [refreshing, setRefreshing] = useState(false);
   const { data: lists, isPending, error, refetch } = useBookmarkLists();
   const [showChildrenOf, setShowChildrenOf] = useState<Record<string, boolean>>(
     {},
   );
   const apiUtils = api.useUtils();
+
+  // Check if there are any shared lists
+  const hasSharedLists = useMemo(() => {
+    return lists?.data.some((list) => list.userRole !== "owner") ?? false;
+  }, [lists?.data]);
 
   useEffect(() => {
     setRefreshing(isPending);
@@ -109,9 +118,40 @@ export default function Lists() {
     },
   ];
 
-  Object.values(lists.root).forEach((list) =>
-    traverseTree(list, links, showChildrenOf),
-  );
+  // Add shared lists section if there are any
+  if (hasSharedLists) {
+    // Count shared lists to determine if section has children
+    const sharedListsCount = Object.values(lists.root).filter(
+      (list) => list.item.userRole !== "owner",
+    ).length;
+
+    links.push({
+      id: "shared-section",
+      logo: "👥",
+      name: "Shared Lists",
+      href: "#",
+      level: 0,
+      numChildren: sharedListsCount,
+      collapsed: !showChildrenOf["shared-section"],
+      isSharedSection: true,
+    });
+
+    // Add shared lists as children if section is expanded
+    if (showChildrenOf["shared-section"]) {
+      Object.values(lists.root).forEach((list) => {
+        if (list.item.userRole !== "owner") {
+          traverseTree(list, links, showChildrenOf, "shared-section", 1);
+        }
+      });
+    }
+  }
+
+  // Add owned lists only
+  Object.values(lists.root).forEach((list) => {
+    if (list.item.userRole === "owner") {
+      traverseTree(list, links, showChildrenOf);
+    }
+  });
 
   return (
     <CustomSafeAreaView>
@@ -130,7 +170,7 @@ export default function Lists() {
         }}
         renderItem={(l) => (
           <View
-            className="mx-2 flex flex-row items-center rounded-xl border border-input bg-white px-4 py-2 dark:bg-accent"
+            className="mx-2 flex flex-row items-center rounded-xl border border-input bg-card px-4 py-2"
             style={condProps({
               condition: l.item.level > 0,
               props: { marginLeft: l.item.level * 20 },
@@ -146,30 +186,46 @@ export default function Lists() {
                   }));
                 }}
               >
-                <TailwindResolver
-                  className="text-foreground"
-                  comp={(style) => (
-                    <ChevronRight
-                      color={style?.color?.toString()}
-                      style={{
-                        transform: [
-                          { rotate: l.item.collapsed ? "0deg" : "90deg" },
-                        ],
-                      }}
-                    />
-                  )}
+                <ChevronRight
+                  color={colors.foreground}
+                  style={{
+                    transform: [
+                      { rotate: l.item.collapsed ? "0deg" : "90deg" },
+                    ],
+                  }}
                 />
               </Pressable>
             )}
 
-            <Link asChild key={l.item.id} href={l.item.href} className="flex-1">
-              <Pressable className="flex flex-row justify-between">
-                <Text className="text-lg text-accent-foreground">
+            {l.item.isSharedSection ? (
+              <Pressable
+                className="flex flex-1 flex-row items-center justify-between"
+                onPress={() => {
+                  setShowChildrenOf((prev) => ({
+                    ...prev,
+                    [l.item.id]: !prev[l.item.id],
+                  }));
+                }}
+              >
+                <Text>
                   {l.item.logo} {l.item.name}
                 </Text>
-                <ChevronRight color="rgb(0, 122, 255)" />
               </Pressable>
-            </Link>
+            ) : (
+              <Link
+                asChild
+                key={l.item.id}
+                href={l.item.href}
+                className="flex-1"
+              >
+                <Pressable className="flex flex-row items-center justify-between">
+                  <Text>
+                    {l.item.logo} {l.item.name}
+                  </Text>
+                  <ChevronRight />
+                </Pressable>
+              </Link>
+            )}
           </View>
         )}
         data={links}
